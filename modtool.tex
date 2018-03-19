@@ -1,0 +1,393 @@
+\documentclass[a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage[T1]{fontenc}
+\usepackage{charter}
+\usepackage{environ}
+\usepackage{tikz}
+\usepackage[hidelinks]{hyperref}
+\usetikzlibrary{calc,matrix}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+
+
+\makeatletter
+\let\matamp=&
+\catcode`\&=13
+\makeatletter
+\def&{\iftikz@is@matrix
+  \pgfmatrixnextcell
+  \else
+  \matamp
+  \fi}
+\makeatother
+
+\newcounter{lines}
+\def\endlr{\stepcounter{lines}\\}
+
+\newcounter{vtml}
+\setcounter{vtml}{0}
+
+\newif\ifvtimelinetitle
+\newif\ifvtimebottomline
+\tikzset{description/.style={
+  column 2/.append style={#1}
+ },
+ timeline color/.store in=\vtmlcolor,
+ timeline color=red!80!black,
+ timeline color st/.style={fill=\vtmlcolor,draw=\vtmlcolor},
+ use timeline header/.is if=vtimelinetitle,
+ use timeline header=false,
+ add bottom line/.is if=vtimebottomline,
+ add bottom line=false,
+ timeline title/.store in=\vtimelinetitle,
+ timeline title={},
+ line offset/.store in=\lineoffset,
+ line offset=4pt,
+}
+
+\NewEnviron{vtimeline}[1][]{%
+\setcounter{lines}{1}%
+\stepcounter{vtml}%
+\begin{tikzpicture}[column 1/.style={anchor=east},
+ column 2/.style={anchor=west},
+ text depth=0pt,text height=1ex,
+ row sep=1ex,
+ column sep=1em,
+ #1
+]
+\matrix(vtimeline\thevtml)[matrix of nodes]{\BODY};
+\pgfmathtruncatemacro\endmtx{\thelines-1}
+\path[timeline color st] 
+($(vtimeline\thevtml-1-1.north east)!0.5!(vtimeline\thevtml-1-2.north west)$)--
+($(vtimeline\thevtml-\endmtx-1.south east)!0.5!(vtimeline\thevtml-\endmtx-2.south west)$);
+\foreach \x in {1,...,\endmtx}{
+ \node[circle,timeline color st, inner sep=0.15pt, draw=white, thick] 
+ (vtimeline\thevtml-c-\x) at 
+ ($(vtimeline\thevtml-\x-1.east)!0.5!(vtimeline\thevtml-\x-2.west)$){};
+ \draw[timeline color st](vtimeline\thevtml-c-\x.west)--++(-3pt,0);
+ }
+ \ifvtimelinetitle%
+  \draw[timeline color st]([yshift=\lineoffset]vtimeline\thevtml.north west)--
+  ([yshift=\lineoffset]vtimeline\thevtml.north east);
+  \node[anchor=west,yshift=16pt,font=\large]
+   at (vtimeline\thevtml-1-1.north west) 
+   {\textsc{Timeline \thevtml}: \textit{\vtimelinetitle}};
+ \else%
+  \relax%
+ \fi%
+ \ifvtimebottomline%
+   \draw[timeline color st]([yshift=-\lineoffset]vtimeline\thevtml.south west)--
+  ([yshift=-\lineoffset]vtimeline\thevtml.south east);
+ \else%
+   \relax%
+ \fi%
+\end{tikzpicture}
+}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\title{Google Summer of Code 2018}
+
+\author{gr-modtool overhaul}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+Presently gr-modtool is not Py3k compatible. But now most software developers are moving towards python 3 because of its high intuitiveness, chained error handling and various other intriguing features. So, it is a necessity to make the tool Py3k compatible.
+\\
+In the current scenario, applications are expected to be modular, customizable, and easily extensible. All these can be accomplished by building a strong plug-in architecture. 
+The code base of gr-modtool as of now is static, i.e., some portion of the tool is repetitive. So, to improve the usability and understanding of the tool, it is highly desirable to make it more functional.
+\\
+In the proposal, the focus is mainly on the pockets of Py3k idiosyncrasies, the patches where code needs to be functional for better usability and the methodology for building modtool as a pluggable command line tool.
+
+\subsection{Primary features of project}
+\begin{enumerate}
+\item Version independent compatibility with python 2 and python 3.
+\item Rewrite the tool as a plug-in architecture
+\item Refine the codebase to make the code more functional and restructuring the present codeblocks
+\item Write an actual UI for making the tool much more interactive (if possible)
+\end{enumerate}
+
+\section{Proposed Workflow}
+\label{sec:theory}
+Initially, I’ll work upon making the entire modtool python 3 compatible. Then, I will work upon initialising plugin architecture, then rewriting the entire tool upgrading the current utilities and user experience (if needed) while using the tool for building the blocks. After that, I will start with the main task of making the code more functional and rewriting the same as plug-in architecture with present functionalities like add, remove, disable, etc. as plugins.
+
+\subsection{Python version independent compatibility}
+Although gr-modtool automates the boring, monotonous work involved in writing the boilerplate code, makefile editing, etc. for cpp or python 2 developers, it is the need of the hour to make it python 3 compatible. 
+\\
+So, the major patches of python 3 incompatibility that I observed are:
+\subsubsection{Handling Exceptions}
+In python 3, there is a change in methodology for handling exceptions as it gets quite confusing when raising multiple kinds of exceptions in python 2.
+\\
+So the present code throws a SyntaxError for several try-except statements. 
+\\
+For example, in build\_utils.py, the present code:
+\begin{lstlisting}
+try:
+    if os.environ['do_makefile'] == '0':
+        do_makefile = False
+    else:
+        do_makefile = True
+except KeyError, e:
+    do_makefile = False
+\end{lstlisting}
+changes to
+\begin{lstlisting}
+try:
+    if os.environ['do_makefile'] == '0':
+        do_makefile = False
+    else:
+        do_makefile = True
+except KeyError as e:
+    do_makefile = False
+\end{lstlisting}
+
+\subsubsection{Raising Exceptions}
+In python 3, there is a change in methodology for raising exceptions since exceptions are classes and they need to be instantiated before raising. So, the present code raises SyntaxError while raising exceptions.
+\\
+For example in build\_utils.py, the present code:
+\begin{lstlisting}
+mo = re.search (r'\.([a-z]+)\.t$', template_name)
+if not mo:
+    raise ValueError, "Incorrectly formed template_name '%s'" % (template_name,)
+return mo.group (1)
+\end{lstlisting}
+changes to
+\begin{lstlisting}
+mo = re.search (r'\.([a-z]+)\.t$', template_name)
+if not mo:
+    raise ValueError("Incorrectly formed template_name '%s'" % (template_name,))
+return mo.group (1)
+\end{lstlisting}
+
+\subsubsection{Import Statement}
+For modules that have been renamed we can use try-except or can import the from \_\_future\_\_ python module.
+\\
+There are several other variations like difference in print statement, metaclasses, integer incompatibilities, etc. which will be incorporated if required.
+
+\subsection{Functional Code}
+Although gr-modtool works like magic and is extremely smooth and easy to use, the codebase is fairly static chunk of code with series of if-then-else rules which makes the code look slightly redundant and not very clear. These slight shortcomings can be easily tackled by making the code more functional.
+\\
+For example, in modtool\_add.py, several parts of the code are repetitive like
+\begin{lstlisting}
+self._info['blocktype'] = options.block_type
+if self._info['blocktype'] is None:
+    print str(self._block_types)
+    with SequenceCompleter(sorted(self._block_types)):
+        while self._info['blocktype'] not in self._block_types:
+            self._info['blocktype'] = raw_input("Enter block type: ")
+            if self._info['blocktype'] not in self._block_types:
+                print 'Must be one of ' + str(self._block_types)
+
+
+self._info['lang'] = options.lang
+if self._info['lang'] is None:
+    language_candidates = ('cpp', 'python')
+    with SequenceCompleter(language_candidates):
+        while self._info['lang'] not in language_candidates:
+            self._info['lang'] = raw_input("Language (python/cpp): ")
+\end{lstlisting}
+which can be made less redundant by functional approach like 
+\begin{lstlisting}
+def getValue(parameter, candidates):
+	self._info[parameter] = options.parameter
+	if self._info[parameter] is None:
+	    print str(candidates)
+	    with SequenceCompleter(sorted(candidates)):
+	        while self._info[parameter] not in candidates:
+	          self._info[parameter] = raw_input("Enter "+parameter+" type: ")
+	            if self._info[parameter] not in candidates:
+	                print 'Must be one of ' + str(candidates)
+\end{lstlisting}
+and then calling the function with the required parameters to get the value.
+\\
+Moreover using a functional approach even for non redundant code eases the process of program development and program testing. It serves as procedural abstraction wherein a programmer uses it as a black box and just needs the name and parameters to invoke it.
+\\
+So, I will make the entire code functional to make it more readable and make future development on tool a bit easy.
+
+\subsection{Plugin Architecture}
+\begin{itemize}
+\item Implementing and incorporating application features become easier.
+\item Isolating a module becomes easier
+\item Custom versions of applications can be created without source code modifications.
+\item Disabling unwanted features becomes easier at user end
+\end{itemize}
+After the plug-in architecture is implemented the modtool can be extended to include VOLK and RFNoC.
+\\ \\
+There will be three main classes of the architecture:-
+\begin{itemize}
+\item \textbf{CLI}: This is the main command line interface. It handles user input and delegates execution to the plugin manager
+\item \textbf{PluginManager}: Loads plugins and calls the appropriate plugin method when the user invokes the command line.
+\item \textbf{AbstractPlugin}: Defines common behavior for all plugins. Each plugin class must extend this one to be considered a valid plugin.
+\end{itemize}
+
+The command line tool will have the following syntax: \textbf{cli $<$plugin$>$$<$command$>$ $<$arguments$>$} wherein arguments aren’t mandatory. 
+\\
+For example:\textit{cli gr\_modtool add -t general} or \textit{cli rfnocmodtool help} are some examples of valid commands.
+\\ \\
+The logic implementation of these classes (basic understanding) is:
+\begin{itemize}
+\item \textbf{CLI}: If the number of arguments are less than two, it will call pluginmanager to show the list of available plugins with their functionalities and commands. Else it will pass the plugin name and arguments to the pluginmanager without the command to print the help of the plugin.
+\item \textbf{PluginManager}: Firstly, it will dynamically initialize the list of all available plugins. After that, it will import the plug-in from the plugins list and load the same.
+\\
+Code for loading a plugin will look like:	
+\begin{lstlisting}
+def load_plugin(self, plugin_name):
+    """ Loads a single plugin given its name """
+    if not plugin_name in __all__:
+        raise KeyError("Plugin " + plugin_name + " not found")
+    try:
+        plugin = self.__plugins[plugin_name]
+    except KeyError:
+        # Load the plugin only if not loaded yet
+        module = __import__("plugins." + plugin_name, fromlist=["plugins"])
+        plugin = module.load()
+        self.__plugins[plugin_name] = plugin
+    return plugin
+\end{lstlisting}
+After that it will call the given command of the given plugin with the user specified arguments (if any).
+\\
+Proper exception handling is also a part of the project.
+\item \textbf{AbstractPlugin}: This is the base class for all plugins. It simply reads all public methods from the plugin class and exposes them to the plugin manager as commands that can be invoked.
+\\
+Its basic structure looks like:
+\begin{lstlisting}
+def _commands(self):
+    """ Get the list of commands for the current plugin.
+    By default all public methods in the plugin implementation
+    will be used as plugin commands. This method can be overriden
+    in subclasses to customize the available command list """
+    attrs = filter(lambda attr: not attr.startswith('_'), dir(self))
+    commands = {}
+    for attr in attrs:
+        method = getattr(self, attr)
+        commands[attr] = method
+    return commands
+\end{lstlisting}
+After that for building the plugins (presently just the gr\_modtool plugin), the plugin needs to be put in the plugins folder and its class should extend the AbstractPlugin. 
+\end{itemize}
+There are several other tasks like creating metadata files, design the functions in the gr\_modtool plugin, etc. but that have been left intentionally.
+
+\section{Timeline}
+I will utilize the period of community bonding to familiarize myself with the GNU Radio community. I will also make sure to get a deeper insight over the source code. This will then enable me to contribute more efficiently to the community. I will also investigate various ways to implement the plugin architecture and work on building a sample plugin architecture to get the hang of bugs and various issues that come with it. I will also define minute details of the project so that I face minimal difficulty in the coding period.
+\\ \\
+The necessary documentation will be done in parallel to to the development. There is 13 week coding period. I have made my deliverables on weekly basis. I have my holidays in the months of May, June and July. So, I'll work full time in these months, i.e., around 40-45 hours a week. In August, I'll work for around 30-35 hours a week.
+\\ \\
+The expected timeline of my project is given below:
+
+\begin{vtimeline}[description={text width=10cm}, 
+ row sep=6ex, 
+ use timeline header,
+ timeline title={GSoC Timeline}]
+Apr 23 - May 14 & Define minute details of the project and build a sample plugin architecture.\endlr
+May 14 - May 21 & Make the entire modtool Python 3 compatible.\endlr
+May 21 - May 28 & Initialise the plugin architecture with the complete basic structure of CLI, PluginManager and the AbstractPlugin.\endlr
+May 28 - June 4 & Complete the basic structure of plugin architecture and the main plugin class which extends the AbstractPlugin.\endlr
+June 4 - June 11 & Restructure modtool\_newmod.py\endlr
+June 11 - June 18 & Restructure modtool\_base.py\endlr
+June 18 - June 25 & Restructure modtool\_add.py\endlr
+June 25 - July 2 & Restructure modtool\_rm.py + bug fixes of all previous modules\endlr
+July 2 - July 9 & Restructure modtool\_disable.py, modtool\_rename.py\endlr
+July 9 - July 16 & Restructure modtool\_help.py and modtool\_info.py\endlr
+July 16- July 23 & Restructure the remaining modtool files\endlr
+July 23 - July 30 & Thoroughly test the entire modtool, buffer time for completing the remaining tasks\endlr
+July 30 - Aug 6 & Start working on UI of the tool\endlr
+Aug 6 - Aug 14 & Complete the project and submit the final report\endlr
+\end{vtimeline}
+\pagebreak
+
+\section{Deliverables of GSoC 2018}
+The deliverables of the GSoC project are as follows:
+\begin{itemize}
+\item Properly implemented version independent compatibility of python 2 and python 3.
+\item Properly restructured code in favor of functional behavior. 
+\item Properly implemented plugin architecture which can be easily extended to include rfnocmodtool and volk modtool.
+\item Slight work for the improvement of user interface.
+\end{itemize}
+
+\subsection{Milestones}
+\begin{itemize}
+\item Phase-1: Py3k compatibility, complete basic structure of Plugin architecture.
+\item Phase-2: Restructure modtool\_newmod.py, modtool\_base.py, modtool\_add.py, modtool\_rm.py.
+\item Final Evaluation: Complete rewriting modtool as plugin architecture, restructuring the modtool to make it more functional and make it entirely python version independent.
+\end{itemize}
+
+\section{Acknowledgement}
+I have thoroughly gone through the GSoC StudentInfo page and GSoC Manifest page. I hereby assure that I will abide by the rules and regulations. I also accept the three strikes rule and the details mentioned.
+\\
+I also assure that I will communicate with the assigned mentor regularly, maintain thorough transparency and keep my work up to date.
+
+\section{License}
+The entire code during the coding period will be transparent, i.e., available on Github. The code submitted will be GPLv3 licensed.
+
+\section{Personal Details and Experience}
+I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming and applied probability. I am proficient in Python, C++, JAVA, Javascript and PHP. I am familiar with git environment as I work regularly on Gitlab. I haven’t contributed much to open source but as we all know “\textbf{Cyberspectrum is the best spectrum}”, so I’ll really like to contribute to GNU Radio and make it as my first remarkable experience. I am proficient in two human languages including English.
+\\
+I have the experience of working closely with a team as I am an active member of \href{http://img.channeli.in/}{\textbf{Information Management Group}} at IIT Roorkee, a bunch of passionate enthusiasts who manage the \href{https://www.iitr.ac.in/}{\textbf{institue main website}}, internet and intranet activities of the university and the placement portal. My major project as a part of group is ‘Forminator’, an intranet based forms application in which the user can create forms, select the audience groups or individuals, create groups for future use and use the information database of the institute. The project has some remarkable features like conditional fields implemented using tree algorithm.
+\\ \\
+I am also a member of \textbf{Programming and Algorithms Group} which is aimed at spreading a culture for Algorithms and related stuff among people both in and outside IIT Roorkee by organising contests, delivering lectures, etc.
+\\ \\
+I started off with GNU Radio in February 2018. To get familiarized with the code, I made the following contributions to the codebase:
+\begin{enumerate}
+\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1672}{\#1672}: Edit Copyright gr-modtool generated files, add feature for adding copyright holder
+\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1676}{\#1676}: Improve check for block(s) removal in modtool\_rm.py
+\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1679}{\#1679}: Add script for blocking the creation of same blockname
+\end{enumerate}
+I will always be available on email or Google Hangouts for any kind of discussion or query.
+\\
+I am highly interested to contribute to GNU Radio after the GSoC period. After the period, I'll mainly focus on the UI of the modtool. 
+\\ \\
+Here is the \href{https://swap-nil7.github.io/resume.pdf}{link} to my CV.
+\\
+\subsection{Other Details}
+\begin{tabular}{ l l l }
+ Address & : & Roorkee, Uttarakhand, India \\
+ Email & : & \href{mailto:swapnil.negi09@gmail.com}{swapnil.negi09@gmail.com}  \\  
+ Github & : & \href{https://github.com/swap-nil7/}{https://github.com/swap-nil7/} \\
+ LinkedIn & : & \href{https://www.linkedin.com/in/swapnil07/}{https://www.linkedin.com/in/swapnil07/} \\
+ Codechef & : & \href{https://www.codechef.com/users/swapnil07}{ https://www.codechef.com/users/swapnil07} \\
+\end{tabular}
+
+\section{Conclusion}
+gr-modtool is currently very powerful tool as it highly facilitates the user’s experience by eliminating the necessity to type the boilerplate code, editing makefiles, etc. But the inclusion of the above mentioned features will make the code more customizable, extensible and will also ease the process of further program development.
+
+\end{document}
