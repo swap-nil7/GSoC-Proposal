@@ -85,7 +85,7 @@
   ([yshift=\lineoffset]vtimeline\thevtml.north east);
   \node[anchor=west,yshift=16pt,font=\large]
    at (vtimeline\thevtml-1-1.north west) 
-   {\textsc{Timeline \thevtml}: \textit{\vtimelinetitle}};
+   {\text{\vtimelinetitle}};
  \else%
   \relax%
  \fi%
@@ -149,7 +149,7 @@ In the proposal, the focus is mainly on the pockets of Py3k idiosyncrasies, the 
 
 \section{Proposed Workflow}
 \label{sec:theory}
-Initially, I’ll work upon making the entire modtool python 3 compatible. Then, I will work upon initialising plugin architecture, then rewriting the entire tool upgrading the current utilities and user experience (if needed) while using the tool for building the blocks. After that, I will start with the main task of making the code more functional and rewriting the same as plug-in architecture with present functionalities like add, remove, disable, etc. as plugins.
+Initially, I’ll work upon making the entire modtool python 3 compatible. Then, I will work upon initialising plugin architecture, then rewriting the entire tool upgrading the current utilities and user experience (if needed). After that, I will start with the main task of making the code more functional and rewriting the same as plug-in architecture with present functionalities like add, remove, disable, etc. as plugins.
 
 \subsection{Python version independent compatibility}
 Although gr-modtool automates the boring, monotonous work involved in writing the boilerplate code, makefile editing, etc. for cpp or python 2 developers, it is the need of the hour to make it python 3 compatible. 
@@ -229,14 +229,14 @@ if self._info['lang'] is None:
 which can be made less redundant by functional approach like 
 \begin{lstlisting}
 def getValue(parameter, candidates):
-	self._info[parameter] = options.parameter
-	if self._info[parameter] is None:
-	    print str(candidates)
-	    with SequenceCompleter(sorted(candidates)):
-	        while self._info[parameter] not in candidates:
-	          self._info[parameter] = raw_input("Enter "+parameter+" type: ")
-	            if self._info[parameter] not in candidates:
-	                print 'Must be one of ' + str(candidates)
+  self._info[parameter] = options.parameter
+  if self._info[parameter] is None:
+      print str(candidates)
+      with SequenceCompleter(sorted(candidates)):
+          while self._info[parameter] not in candidates:
+            self._info[parameter] = raw_input("Enter "+parameter+" type: ")
+              if self._info[parameter] not in candidates:
+                  print 'Must be one of ' + str(candidates)
 \end{lstlisting}
 and then calling the function with the required parameters to get the value.
 \\
@@ -245,6 +245,7 @@ Moreover using a functional approach even for non redundant code eases the proce
 So, I will make the entire code functional to make it more readable and make future development on tool a bit easy.
 
 \subsection{Plugin Architecture}
+Currently modtool is not available as a plug-in. The basic advantages of re-writing it as a plugin architecture are:-
 \begin{itemize}
 \item Implementing and incorporating application features become easier.
 \item Isolating a module becomes easier
@@ -269,7 +270,7 @@ The logic implementation of these classes (basic understanding) is:
 \item \textbf{CLI}: If the number of arguments are less than two, it will call pluginmanager to show the list of available plugins with their functionalities and commands. Else it will pass the plugin name and arguments to the pluginmanager without the command to print the help of the plugin.
 \item \textbf{PluginManager}: Firstly, it will dynamically initialize the list of all available plugins. After that, it will import the plug-in from the plugins list and load the same.
 \\
-Code for loading a plugin will look like:	
+Code for loading a plugin will look like: 
 \begin{lstlisting}
 def load_plugin(self, plugin_name):
     """ Loads a single plugin given its name """
@@ -317,7 +318,7 @@ The expected timeline of my project is given below:
 \begin{vtimeline}[description={text width=10cm}, 
  row sep=6ex, 
  use timeline header,
- timeline title={GSoC Timeline}]
+ timeline title={Timeline of the project}]
 Apr 23 - May 14 & Define minute details of the project and build a sample plugin architecture.\endlr
 May 14 - May 21 & Make the entire modtool Python 3 compatible.\endlr
 May 21 - May 28 & Initialise the plugin architecture with the complete basic structure of CLI, PluginManager and the AbstractPlugin.\endlr
