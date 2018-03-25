@@ -6,6 +6,7 @@
 \usepackage{graphicx}
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage{listings}
+\usepackage{caption}
 \usepackage{color}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -24,8 +25,10 @@
     urlcolor={blue!80!black}
 }
 
-
-\makeatletter
+\makeatletter% Set up caption and labels for lstlistings
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{greatblue}{\parbox{\textwidth}{\hspace{1cm}#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
 \let\matamp=&
 \catcode`\&=13
 \makeatletter
@@ -99,26 +102,29 @@
 \end{tikzpicture}
 }
 
-
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
 \definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{greatblue}{RGB}{91,155,215} 
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
-\lstset{frame=tb,
+\lstset{
   language=Python,
   aboveskip=3mm,
   belowskip=3mm,
   showstringspaces=false,
   columns=flexible,
   basicstyle={\small\ttfamily},
-  numbers=none,
+  numbers=left,
   numberstyle=\tiny\color{gray},
   keywordstyle=\color{blue},
   commentstyle=\color{dkgreen},
   stringstyle=\color{mauve},
+  backgroundcolor=\color{backcolour},
+  upquote=true,
   breaklines=true,
   breakatwhitespace=true,
-  tabsize=3
+  tabsize=4
 }
 
 \title{%
@@ -136,131 +142,140 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Presently gr-modtool is not Py3k compatible. But now most software developers are moving towards python 3 because of its high intuitiveness, chained error handling and various other intriguing features. So, it is a necessity to make the tool Py3k compatible.
+Presently gr-modtool is not Py3k compatible. But now, most software developers are moving towards python 3 because of its high intuitiveness, chained error handling, and various other intriguing features. So, it is a necessity to make the tool Py3k compatible.
 \\
-In the current scenario, applications are expected to be modular, customizable, and easily extensible. All these can be accomplished by building a strong plug-in architecture. 
+In the current scenario, applications are expected to be modular, customizable, and easily extensible. All this can be accomplished by building a strong plugin architecture. 
+\\
+Currently, modtool is only usable as a command line program and isn't scriptable from other Python scripts which limits its scope and efficiency. So, building a Python API for the modtool will be highly advantageous.
+\\
 The code base of gr-modtool as of now is static, i.e., some portion of the tool is repetitive. So, to improve the usability and understanding of the tool, it is highly desirable to make it more functional.
 \\
-In the proposal, the focus is mainly on the pockets of Py3k idiosyncrasies, the patches where code needs to be functional for better usability and the methodology for building modtool as a pluggable command line tool.
+In the proposal, the focus is mainly on the pockets of Py3k idiosyncrasies, the patches where the code needs to be functional for better usability and the methodology for building modtool as a pluggable API.
 
-\subsection{Primary features of project}
+\subsection{Primary features of the project}
 \begin{enumerate}
-\item Version independent compatibility with python 2 and python 3.
-\item Rewrite the tool as a plug-in architecture
+\item Version-independent compatibility with python 2 and python 3
+\item Rewrite the tool as a plugin API/Architecture
 \item Refine the codebase to make the code more functional and restructuring the present codeblocks
 \item Write an actual UI for making the tool much more interactive (if possible)
 \end{enumerate}
 
 \section{Proposed Workflow}
 \label{sec:theory}
-Initially, I’ll work upon making the entire modtool python 3 compatible. Then, I will work upon initializing the plugin architecture. After that, I will start with the main task of making the code more functional and rewriting the modtool as a plug-in architecture with present functionalities like add, remove, disable, etc. as plugins.
+Initially, I will work on making the entire modtool python 3 compatible. Then, I will work to initialize the plugin API. After that, I will start with the main task of making the code more functional and rewriting the modtool as a plugin API with present functionalities like add, remove, disable, etc. as plugins.
 
-\subsection{Python version independent compatibility}
-Although gr-modtool automates the boring, monotonous work involved in writing the boilerplate code, makefile editing, etc. for cpp or python 2 developers, it is the need of the hour to make it python 3 compatible. 
+\subsection{Python version-independent compatibility}
+Although gr-modtool automates the boring, monotonous work involved in writing the boilerplate code, makefile editing, etc. for C++ or Python 2 developers, it is the need of the hour to make it Python 3 compatible. 
 \\
-So, the major patches of python 3 incompatibility that I observed are:
+So, the major patches of Python 3 incompatibilities that I observed are:
 \subsubsection{Handling Exceptions}
-In python 3, there is a change in methodology for handling exceptions as it gets quite confusing when raising multiple kinds of exceptions in python 2.
-\\
-So the present code throws a SyntaxError for several try-except statements. 
+In Python 3, there is a change in methodology for handling exceptions as it gets quite confusing when raising multiple kinds of exceptions in Python 2. So the present code throws a SyntaxError for several try-except statements. 
 \\
 For example, in build\_utils.py, the present code:
 \begin{lstlisting}
-try:
-    if os.environ['do_makefile'] == '0':
+    try:
+        if os.environ['do_makefile'] == '0':
+            do_makefile = False
+        else:
+            do_makefile = True
+    except KeyError, e:
         do_makefile = False
-    else:
-        do_makefile = True
-except KeyError, e:
-    do_makefile = False
 \end{lstlisting}
 changes to
 \begin{lstlisting}
-try:
-    if os.environ['do_makefile'] == '0':
+    try:
+        if os.environ['do_makefile'] == '0':
+            do_makefile = False
+        else:
+            do_makefile = True
+    except KeyError as e:
         do_makefile = False
-    else:
-        do_makefile = True
-except KeyError as e:
-    do_makefile = False
 \end{lstlisting}
 
 \subsubsection{Raising Exceptions}
-In python 3, there is a change in methodology for raising exceptions since exceptions are classes and they need to be instantiated before raising. So, the present code raises SyntaxError while raising exceptions.
+In Python 3, there is a change in methodology for raising exceptions since exceptions are classes and they need to be instantiated before raising. So, the present code raises SyntaxError while raising exceptions.
 \\
 For example in build\_utils.py, the present code:
 \begin{lstlisting}
-mo = re.search (r'\.([a-z]+)\.t$', template_name)
-if not mo:
-    raise ValueError, "Incorrectly formed template_name '%s'" % (template_name,)
-return mo.group (1)
+    mo = re.search (r'\.([a-z]+)\.t$', template_name)
+    if not mo:
+        raise ValueError, "Incorrectly formed template_name '%s'" % (template_name,)
+    return mo.group (1)
 \end{lstlisting}
 changes to
 \begin{lstlisting}
-mo = re.search (r'\.([a-z]+)\.t$', template_name)
-if not mo:
-    raise ValueError("Incorrectly formed template_name '%s'" % (template_name,))
-return mo.group (1)
+    mo = re.search (r'\.([a-z]+)\.t$', template_name)
+    if not mo:
+        raise ValueError("Incorrectly formed template_name '%s'" % (template_name,))
+    return mo.group (1)
 \end{lstlisting}
 
 \subsubsection{Import Statement}
-For modules that have been renamed we can use try-except or can import the from \_\_future\_\_ python module.
+For modules that have been renamed, we can use try-except or can import them from \_\_future\_\_ python module.
+\\ \\
+There are several other variations like the difference in the print statement, metaclasses, integer incompatibilities, etc. which will be incorporated if required.
 \\
-There are several other variations like difference in print statement, metaclasses, integer incompatibilities, etc. which will be incorporated if required.
+The version-independent compatibility can also be ensured using the Python 2 and Python 3 compatibility library "Six" which provides simple utilities for wrapping over differences between two versions.
 
 \subsection{Functional Code}
-Although gr-modtool works like magic and is extremely smooth and easy to use, the codebase is fairly static chunk of code with series of if-then-else rules which makes the code look slightly redundant and not very clear. These slight shortcomings can be easily tackled by making the code more functional.
+Although gr-modtool works like magic and is extremely smooth and easy to use, the codebase is a fairly static chunk of code with series of if-then-else rules which makes the code look slightly redundant and not very clear. These slight shortcomings can be easily tackled by making the code more functional.
 \\
 For example, in modtool\_add.py, several parts of the code are repetitive like
 \begin{lstlisting}
-self._info['blocktype'] = options.block_type
-if self._info['blocktype'] is None:
-    print str(self._block_types)
-    with SequenceCompleter(sorted(self._block_types)):
-        while self._info['blocktype'] not in self._block_types:
-            self._info['blocktype'] = raw_input("Enter block type: ")
-            if self._info['blocktype'] not in self._block_types:
-                print 'Must be one of ' + str(self._block_types)
+  self._info['blocktype'] = options.block_type
+  if self._info['blocktype'] is None:
+      print str(self._block_types)
+      with SequenceCompleter(sorted(self._block_types)):
+          while self._info['blocktype'] not in self._block_types:
+              self._info['blocktype'] = raw_input("Enter block type: ")
+              if self._info['blocktype'] not in self._block_types:
+                  print 'Must be one of ' + str(self._block_types)
 
 
-self._info['lang'] = options.lang
-if self._info['lang'] is None:
-    language_candidates = ('cpp', 'python')
-    with SequenceCompleter(language_candidates):
-        while self._info['lang'] not in language_candidates:
-            self._info['lang'] = raw_input("Language (python/cpp): ")
+  self._info['lang'] = options.lang
+  if self._info['lang'] is None:
+      language_candidates = ('cpp', 'python')
+      with SequenceCompleter(language_candidates):
+          while self._info['lang'] not in language_candidates:
+              self._info['lang'] = raw_input("Language (python/cpp): ")
 \end{lstlisting}
-which can be made less redundant by functional approach like 
+which can be made less redundant by using the functional approach like 
 \begin{lstlisting}
-def getValue(parameter, candidates):
-  self._info[parameter] = options.parameter
-  if self._info[parameter] is None:
-      print str(candidates)
-      with SequenceCompleter(sorted(candidates)):
-          while self._info[parameter] not in candidates:
-            self._info[parameter] = raw_input("Enter "+parameter+" type: ")
-              if self._info[parameter] not in candidates:
-                  print 'Must be one of ' + str(candidates)
+  def getValue(parameter, candidates):
+      self._info[parameter] = options.parameter
+      if self._info[parameter] is None:
+          print str(candidates)
+          with SequenceCompleter(sorted(candidates)):
+              while self._info[parameter] not in candidates:
+                  self._info[parameter] = raw_input('Enter ' + parameter + ' type: ')
+                  if self._info[parameter] not in candidates:
+                      print 'Must be one of ' + str(candidates)
 \end{lstlisting}
 and then calling the function with the required parameters to get the value.
 \\
-Moreover using a functional approach even for non redundant code eases the process of program development and program testing. It serves as procedural abstraction wherein a programmer uses it as a black box and just needs the name and parameters to invoke it.
+Moreover using a functional approach even for non-redundant code eases the process of program development and program testing. It serves as procedural abstraction wherein a programmer uses it as a black box and only requires the name and parameters to invoke it.
 \\
-So, I will make the entire code functional to make it more readable and make future development on tool a bit easy.
+So, I will make the entire code functional to make it more readable and make future development of the tool a bit easier.
 
-\subsection{Plugin Architecture}
-Currently modtool is not available as a plug-in. The basic advantages of re-writing it as a plugin architecture are:-
+\subsection{Plugin API/Architecture}
+Currently modtool is not available as a plugin. The basic advantages of re-writing it as a plugin architecture are:-
 \begin{itemize}
-\item Implementing and incorporating application features become easier.
+\item Implementing and incorporating application features become easier
 \item Isolating a module becomes easier
-\item Custom versions of applications can be created without source code modifications.
+\item Custom versions of applications can be created without source code modifications
 \item Disabling unwanted features becomes easier at user end
 \end{itemize}
-After the plug-in architecture is implemented the modtool can be extended to include VOLK and RFNoC.
+Moreover, modtool is only usable as a command line program and isn't available as an API. The basic advantages of building a Python API for the modtool are:-
+\begin{itemize}
+\item Sharing and distribution of the content becomes easier
+\item Redundancy will be reduced as the code written by the user is reusable
+\item Usability of the tool will increase as it will also be scriptable from other Python scripts
+\end{itemize}
+After the Plugin API is implemented, the modtool can be extended to include VOLK and RFNoC.
 \\ \\
 There will be three main classes of the architecture:-
 \begin{itemize}
-\item \textbf{CLI}: This is the main command line interface. It handles user input and delegates execution to the plugin manager
+\item \textbf{CLI}: This is the main command line interface. It handles user input and delegates execution to the plugin manager.
 \item \textbf{PluginManager}: Loads plugins and calls the appropriate plugin method when the user invokes the command line.
 \item \textbf{AbstractPlugin}: Defines common behavior for all plugins. Each plugin class must extend this one to be considered a valid plugin.
 \end{itemize}
@@ -269,29 +284,62 @@ The command line tool will have the following syntax: \textbf{cli $<$plugin$>$$<
 \\
 For example:\textit{cli gr\_modtool add -t general} or \textit{cli rfnocmodtool help} are some examples of valid commands.
 \\ \\
-The logic implementation of these classes (basic understanding) is:
+The basic structure of the architecture is as follows:
 \begin{itemize}
-\item \textbf{CLI}: If the number of arguments are less than two, it will call pluginmanager to show the list of available plugins with their functionalities and commands. Else it will pass the plugin name and arguments to the pluginmanager without the command to print the help of the plugin.
-\item \textbf{PluginManager}: Firstly, it will dynamically initialize the list of all available plugins. After that, it will import the plug-in from the plugins list and load the same.
+\item \textbf{CLI}: If the number of arguments are less than two, it will call PluginManager to show the list of available plugins with their functionalities and commands. Else it will pass the plugin name and arguments to the PluginManager without the command to print the help of the plugin.
+\item \textbf{plugins/\_\_init\_\_.py}: This is the required file to make Python treat the directory as a containing package. Here, it will also be used to set the \_\_all\_\_ variable, i.e., the list of module the package exports as an API.
 \\
-Code for loading a plugin will look like: 
+The basic structure of the code will look like
 \begin{lstlisting}
-def load_plugin(self, plugin_name):
-    """ Loads a single plugin given its name """
-    if not plugin_name in __all__:
-        raise KeyError("Plugin " + plugin_name + " not found")
-    try:
-        plugin = self.__plugins[plugin_name]
-    except KeyError:
-        # Load the plugin only if not loaded yet
-        module = __import__("plugins." + plugin_name, fromlist=["plugins"])
-        plugin = module.load()
-        self.__plugins[plugin_name] = plugin
-    return plugin
+    import os 
+    plugin_dir = "plugins"
+
+    __all__ = []
+    for filename in os.listdir(plugin_dir):
+        filename = plugin_dir + "/" + filename
+        if os.path.isfile(filename):
+            basename = os.path.basename(filename)
+            base, extension = os.path.splitext(basename)
+            if extension == ".py" and not basename.startswith("_"):
+                __all__.append(base)
 \end{lstlisting}
-After that it will call the given command of the given plugin with the user specified arguments (if any).
+
+\item \textbf{PluginManager}: The module will load the required plugin from the plugins list and call it with the specified commands(if any).
 \\
-Proper exception handling is also a part of the project.
+Code for loading and calling a plugin will look like: 
+\begin{lstlisting}
+    def load_plugin(self, plugin_name):
+        """ Loads a single plugin given its name """
+        if not plugin_name in __all__:
+            raise KeyError("Plugin " + plugin_name + " not found")
+        try:
+            plugin = self.__plugins[plugin_name]
+        except KeyError:
+            # Load the plugin only if not loaded yet
+            module = __import__("plugins." + plugin_name, fromlist=["plugins"])
+            plugin = module.load()
+            self.__plugins[plugin_name] = plugin
+        return plugin
+
+    def call(self, plugin_name, command_name, args):
+        """ Calls the given command on the given plugin """
+        try:
+            plugin = self.load_plugin(plugin_name)
+            if not command_name:
+                self.help(plugin)
+            else:
+                try:
+                    command = plugin._commands()[command_name]
+                    return command(args)
+                except KeyError:
+                    # Command not found in plugin. Print only plugin help
+                    self.help(plugin)
+        except KeyError:
+            # Plugin not found, pring generic help
+            self.help_all()
+\end{lstlisting}
+After this, it will call the specified command of the given plugin with the user-specified arguments (if any).
+
 \item \textbf{AbstractPlugin}: This is the base class for all plugins. It simply reads all public methods from the plugin class and exposes them to the plugin manager as commands that can be invoked.
 \\
 Its basic structure looks like:
@@ -308,16 +356,21 @@ def _commands(self):
         commands[attr] = method
     return commands
 \end{lstlisting}
-After that for building the plugins (presently just the gr\_modtool plugin), the plugin needs to be put in the plugins folder and its class should extend the AbstractPlugin. 
 \end{itemize}
-There are several other tasks like creating metadata files, designing the functions in the gr\_modtool plugin, etc. Their details have been left intentionally but they'll be implemented along with the above architecture model.
-
+After this, for building the plugins (presently just the gr\_modtool plugin), the plugin needs to be put in the plugins folder and its class should extend the AbstractPlugin. 
+\\
+There are several other tasks like creating metadata files, designing the functions in the gr\_modtool plugin, etc. Their details have been left intentionally but they will be implemented along with the above architecture model.
+\subsection{UI Enhancements (if time permits)}
+Although modtool is quite simple to use with features like SequenceCompleter, it can be made more interactive by using Python libraries like Pygments (syntax highlighting library), Fuzzy Finder (library to narrow down suggestions with minimal typing), etc. 
+\\
+The work on Graphical User Interface will be done after the GSoC coding period, and hence is beyond the scope of the proposal.
 \section{Timeline}
 I will utilize the period of community bonding to familiarize myself with the GNU Radio community. I will also make sure to gain a deeper insight of the source code. This will enable me to contribute more efficiently to the community. Moreover, I will investigate various ways to implement the plugin architecture and work on building a sample plugin architecture to get the hang of bugs and various issues that come with it. Additionally, I will define minute details of the project so that I face minimal difficulty in the coding period.
 \\ \\
-The necessary documentation will be done in parallel with the development. There is 13 week coding period. I have my holidays in the months of May, June and July, so I'll work full time in this period, i.e., around 40-45 hours a week while in August I'll work for around 30-35 hours a week. I have made my deliverables accordingly on weekly basis. 
+The necessary documentation will be done in parallel with the development. There is 13 week coding period. I have my holidays in the months of May, June, and July, so I'll work full time during this period, i.e., around 40-45 hours a week while in August I'll work for around 30-35 hours a week. I have made my deliverables accordingly on weekly basis. 
 \\ \\
-The expected timeline of my project is given below:
+The expected timeline for my project is given below:
+\\ \\
 
 \begin{vtimeline}[description={text width=10cm}, 
  row sep=6ex, 
@@ -325,8 +378,8 @@ The expected timeline of my project is given below:
  timeline title={Timeline of the project}]
 Apr 23 - May 14 & Define minute details of the project and build a sample plugin architecture.\endlr
 May 14 - May 21 & Make the entire modtool Python 3 compatible.\endlr
-May 21 - May 28 & Initialise the plugin architecture with the complete basic structure of CLI, PluginManager and the AbstractPlugin.\endlr
-May 28 - June 4 & Complete the basic structure of plugin architecture and the main plugin class which extends the AbstractPlugin.\endlr
+May 21 - May 28 & Initialise the plugin architecture with the complete basic structure of CLI, \_\_init\_\_.py (for API support), and the PluginManager.\endlr
+May 28 - June 4 & Complete the basic structure of plugin architecture. Complete Abstract Plugin and the main plugin class for gr-modtool.\endlr
 June 4 - June 11 & Restructure modtool\_newmod.py\endlr
 June 11 - June 18 & Restructure modtool\_base.py\endlr
 June 18 - June 25 & Restructure modtool\_add.py\endlr
@@ -346,14 +399,21 @@ The deliverables of the GSoC project are as follows:
 \item Properly implemented version independent compatibility of python 2 and python 3 with thorough testing.
 \item Properly restructured code in favor of functional behavior. 
 \item Properly implemented plugin architecture which can be easily extended to include rfnocmodtool and volk modtool.
-\item Slight work for the improvement of user interface.
+\item Slight work for the improvement of Command Line Interface.
 \end{itemize}
 
 \subsection{Milestones}
 \begin{itemize}
-\item Phase-1: Py3k compatibility, complete basic structure of Plugin architecture.
+\item Phase-1: Py3k compatibility, the complete basic structure of Plugin architecture.
 \item Phase-2: Restructure modtool\_newmod.py, modtool\_base.py, modtool\_add.py, modtool\_rm.py.
 \item Final Evaluation: Complete rewriting modtool as plugin architecture, restructuring the modtool to make it more functional and make it entirely python version independent.
+\end{itemize}
+
+\subsection{Review/Merge Cycle}
+\begin{itemize}
+\item May 28: Merge code for version-independent Python compatibility.
+\item The code of the restructured modtool scripts can be merged one week after the proposed end date of the restructuring of the particular script.
+\item August 6: Merge the entire restructured tool with Plugin API/Architecture.
 \end{itemize}
 
 \section{Acknowledgement}
@@ -365,17 +425,17 @@ I also assure that I will communicate with the assigned mentor regularly, mainta
 The entire code during the coding period will be transparent, i.e., available on Github. The code submitted will be GPLv3 licensed.
 
 \section{Personal Details and Experience}
-I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming and applied probability. I am proficient in Python, C++, JAVA, Javascript and PHP. I am familiar with git environment as I work regularly on Gitlab. I haven’t contributed much to open source but since we all know “\textbf{Cyberspectrum is the best spectrum}”, I’ll really like to contribute to GNU Radio and make it as my first remarkable experience. I am proficient in two human languages including English.
+I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming, and applied probability. I am proficient in Python, C++, JAVA, Javascript, and PHP. I am familiar with git environment as I work regularly on Gitlab. I haven’t contributed much to open source but since we all know “\textbf{Cyberspectrum is the best spectrum}”, I’ll really like to contribute to GNU Radio and make it as my first remarkable experience. I am proficient in two human languages including English.
 \\
-I have the experience of working closely with a team as I am an active member of \href{http://img.channeli.in/}{\textbf{Information Management Group}} at IIT Roorkee, a bunch of passionate enthusiasts who manage the \href{https://www.iitr.ac.in/}{\textbf{institute main website}}, internet and intranet activities of the university and the placement portal. My major project as a part of group is ‘Forminator’, an intranet based forms application in which the user can create forms, select the audience groups or individuals, create groups for future use and use the information database of the institute. The project has some remarkable features like conditional fields implemented using tree algorithm.
+I have the experience of working closely with a team as I am an active member of \href{http://img.channeli.in/}{\textbf{Information Management Group}} at IIT Roorkee, a bunch of passionate enthusiasts who manage the \href{https://www.iitr.ac.in/}{\textbf{institute main website}}, internet and intranet activities of the university and the placement portal. My major project as a part of the group is ‘Forminator’, an intranet-based forms application in which the user can create forms, select the audience groups or individuals, create groups for future use and use the information database of the institute. The project has some remarkable features like conditional fields implemented using tree algorithm.
 \\ \\
-I am also a member of \textbf{Programming and Algorithms Group} which is aimed at spreading a culture for Algorithms and competitive programming among people both in and outside IIT Roorkee by organising contests, delivering lectures, etc.
+I am also a member of \textbf{Programming and Algorithms Group} which is aimed at spreading the culture of algorithms and competitive programming among people both in and outside IIT Roorkee by organizing contests, delivering lectures, etc.
 \\ \\
 I started off with GNU Radio in February 2018. To get familiarized with the code, I made the following contributions to the codebase:
 \begin{enumerate}
-\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1672}{\#1672}: Edit Copyright gr-modtool generated files, add feature for adding copyright holder
+\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1672}{\#1672}: Edit Copyright gr-modtool generated files, add the feature for adding copyright holder
 \item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1676}{\#1676}: Improve check for block(s) removal in modtool\_rm.py
-\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1679}{\#1679}: Add script for blocking the creation of same blockname
+\item Pull request \href{https://github.com/gnuradio/gnuradio/pull/1679}{\#1679}: Add script for blocking the creation of the same blockname
 \end{enumerate}
 I will always be available on email or Google Hangouts for any kind of discussion or query.
 \\
@@ -393,6 +453,6 @@ Here is the \href{https://swap-nil7.github.io/resume.pdf}{link} to my CV.
 \end{tabular}
 
 \section{Conclusion}
-gr-modtool is currently very powerful tool as it highly facilitates the user’s experience by eliminating the necessity to type the boilerplate code, editing makefiles, etc. But the inclusion of the above mentioned features will make the code more customizable, extensible and will also ease the process of further program development.
+gr-modtool is currently very powerful tool as it highly facilitates the user’s experience by eliminating the necessity to type the boilerplate code, editing makefiles, etc. But the inclusion of the above-mentioned features will make the code more customizable, extensible and will also ease the process of further program development.
 
 \end{document}
