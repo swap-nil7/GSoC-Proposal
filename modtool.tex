@@ -258,18 +258,18 @@ Moreover using a functional approach even for non-redundant code eases the proce
 So, I will make the entire code functional to make it more readable and make future development of the tool a bit easier.
 
 \subsection{Plugin API/Architecture}
-Currently modtool is not available as a plugin. The basic advantages of re-writing it as a plugin architecture are:-
+Currently, modtool is not available as a plugin. The basic advantages of re-writing it as a plugin architecture are:-
 \begin{itemize}
 \item Implementing and incorporating application features become easier
 \item Isolating a module becomes easier
 \item Custom versions of applications can be created without source code modifications
-\item Disabling unwanted features becomes easier at user end
+\item Disabling unwanted features become easier at the user end
 \end{itemize}
-Moreover, modtool is only usable as a command line program and isn't available as an API. The basic advantages of building a Python API for the modtool are:-
+Moreover, modtool is only usable as a command line program and is not available as an API. The basic advantages of building a Python API for the modtool are:-
 \begin{itemize}
 \item Sharing and distribution of the content becomes easier
 \item Redundancy will be reduced as the code written by the user is reusable
-\item Usability of the tool will increase as it will also be scriptable from other Python scripts
+\item Usability of the tool increases as it is also scriptable from other Python scripts
 \end{itemize}
 After the Plugin API is implemented, the modtool can be extended to include VOLK and RFNoC.
 \\ \\
@@ -280,14 +280,14 @@ There will be three main classes of the architecture:-
 \item \textbf{AbstractPlugin}: Defines common behavior for all plugins. Each plugin class must extend this one to be considered a valid plugin.
 \end{itemize}
 
-The command line tool will have the following syntax: \textbf{cli $<$plugin$>$$<$command$>$ $<$arguments$>$} wherein arguments aren’t mandatory. 
+The command line tool will have the following syntax: \textbf{cli $<$plugin$>$$<$command$>$ $<$arguments$>$} wherein arguments are not mandatory. 
 \\
 For example:\textit{cli gr\_modtool add -t general} or \textit{cli rfnocmodtool help} are some examples of valid commands.
 \\ \\
 The basic structure of the architecture is as follows:
 \begin{itemize}
-\item \textbf{CLI}: If the number of arguments are less than two, it will call PluginManager to show the list of available plugins with their functionalities and commands. Else it will pass the plugin name and arguments to the PluginManager without the command to print the help of the plugin.
-\item \textbf{plugins/\_\_init\_\_.py}: This is the required file to make Python treat the directory as a containing package. Here, it will also be used to set the \_\_all\_\_ variable, i.e., the list of module the package exports as an API.
+\item \textbf{CLI}: If the number of arguments is less than two, it will call PluginManager to show the list of available plugins with their functionalities and commands. Else it will pass the plugin name and arguments to the PluginManager without the command to print the help of the plugin.
+\item \textbf{plugins/\_\_init\_\_.py}: This is the required file to make Python treat the directory as a containing package. Here, it will also be used to set the \_\_all\_\_ variable, i.e., the list of the modules that the package exports as an API.
 \\
 The basic structure of the code will look like
 \begin{lstlisting}
@@ -347,7 +347,7 @@ Its basic structure looks like:
 def _commands(self):
     """ Get the list of commands for the current plugin.
     By default all public methods in the plugin implementation
-    will be used as plugin commands. This method can be overriden
+    will be used as plugin commands. This method can be overridden
     in subclasses to customize the available command list """
     attrs = filter(lambda attr: not attr.startswith('_'), dir(self))
     commands = {}
@@ -367,7 +367,7 @@ The work on Graphical User Interface will be done after the GSoC coding period, 
 \section{Timeline}
 I will utilize the period of community bonding to familiarize myself with the GNU Radio community. I will also make sure to gain a deeper insight of the source code. This will enable me to contribute more efficiently to the community. Moreover, I will investigate various ways to implement the plugin architecture and work on building a sample plugin architecture to get the hang of bugs and various issues that come with it. Additionally, I will define minute details of the project so that I face minimal difficulty in the coding period.
 \\ \\
-The necessary documentation will be done in parallel with the development. There is 13 week coding period. I have my holidays in the months of May, June, and July, so I'll work full time during this period, i.e., around 40-45 hours a week while in August I'll work for around 30-35 hours a week. I have made my deliverables accordingly on weekly basis. 
+The necessary documentation will be done in parallel with the development. There is 13-week long coding period. I have my holidays in the months of May, June, and July, so I'll work full time during this period, i.e., around 40-45 hours a week while in August I'll work for around 30-35 hours a week. I have made my deliverables accordingly on weekly basis. 
 \\ \\
 The expected timeline for my project is given below:
 \\ \\
