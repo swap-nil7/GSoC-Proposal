@@ -173,23 +173,23 @@ In Python 3, there is a change in methodology for handling exceptions as it gets
 \\
 For example, in build\_utils.py, the present code:
 \begin{lstlisting}
-    try:
-        if os.environ['do_makefile'] == '0':
-            do_makefile = False
-        else:
-            do_makefile = True
-    except KeyError, e:
+try:
+    if os.environ['do_makefile'] == '0':
         do_makefile = False
+    else:
+        do_makefile = True
+except KeyError, e:
+    do_makefile = False
 \end{lstlisting}
 changes to
 \begin{lstlisting}
-    try:
-        if os.environ['do_makefile'] == '0':
-            do_makefile = False
-        else:
-            do_makefile = True
-    except KeyError as e:
+try:
+    if os.environ['do_makefile'] == '0':
         do_makefile = False
+    else:
+        do_makefile = True
+except KeyError as e:
+    do_makefile = False
 \end{lstlisting}
 
 \subsubsection{Raising Exceptions}
@@ -197,17 +197,19 @@ In Python 3, there is a change in methodology for raising exceptions since excep
 \\
 For example in build\_utils.py, the present code:
 \begin{lstlisting}
-    mo = re.search (r'\.([a-z]+)\.t$', template_name)
-    if not mo:
-        raise ValueError, "Incorrectly formed template_name '%s'" % (template_name,)
-    return mo.group (1)
+mo = re.search(r'\.([a-z]+)\.t$', template_name)
+if not mo:
+    raise ValueError, "Incorrectly formed template_name '%s'" \
+        % (template_name, )
+return mo.group(1)
 \end{lstlisting}
 changes to
 \begin{lstlisting}
-    mo = re.search (r'\.([a-z]+)\.t$', template_name)
-    if not mo:
-        raise ValueError("Incorrectly formed template_name '%s'" % (template_name,))
-    return mo.group (1)
+mo = re.search(r'\.([a-z]+)\.t$', template_name)
+if not mo:
+    raise ValueError("Incorrectly formed template_name '%s'"
+                       % (template_name,))
+return mo.group(1)
 \end{lstlisting}
 
 \subsubsection{Import Statement}
@@ -222,34 +224,35 @@ Although gr-modtool works like magic and is extremely smooth and easy to use, th
 \\
 For example, in modtool\_add.py, several parts of the code are repetitive like
 \begin{lstlisting}
-  self._info['blocktype'] = options.block_type
-  if self._info['blocktype'] is None:
-      print str(self._block_types)
-      with SequenceCompleter(sorted(self._block_types)):
-          while self._info['blocktype'] not in self._block_types:
-              self._info['blocktype'] = raw_input("Enter block type: ")
-              if self._info['blocktype'] not in self._block_types:
-                  print 'Must be one of ' + str(self._block_types)
+self._info['blocktype'] = options.block_type
+if self._info['blocktype'] is None:
+    print str(self._block_types)
+    with SequenceCompleter(sorted(self._block_types)):
+        while self._info['blocktype'] not in self._block_types:
+            self._info['blocktype'] = raw_input("Enter block type: ")
+            if self._info['blocktype'] not in self._block_types:
+                print 'Must be one of ' + str(self._block_types)
 
 
-  self._info['lang'] = options.lang
-  if self._info['lang'] is None:
-      language_candidates = ('cpp', 'python')
-      with SequenceCompleter(language_candidates):
-          while self._info['lang'] not in language_candidates:
-              self._info['lang'] = raw_input("Language (python/cpp): ")
+self._info['lang'] = options.lang
+if self._info['lang'] is None:
+    language_candidates = ('cpp', 'python')
+    with SequenceCompleter(language_candidates):
+        while self._info['lang'] not in language_candidates:
+            self._info['lang'] = raw_input("Language (python/cpp): ")
 \end{lstlisting}
 which can be made less redundant by using the functional approach like 
 \begin{lstlisting}
-  def getValue(parameter, candidates):
-      self._info[parameter] = options.parameter
-      if self._info[parameter] is None:
-          print str(candidates)
-          with SequenceCompleter(sorted(candidates)):
-              while self._info[parameter] not in candidates:
-                  self._info[parameter] = raw_input('Enter ' + parameter + ' type: ')
-                  if self._info[parameter] not in candidates:
-                      print 'Must be one of ' + str(candidates)
+def getValue(parameter, candidates):
+    self._info[parameter] = options.parameter
+    if self._info[parameter] is None:
+        print str(candidates)
+        with SequenceCompleter(sorted(candidates)):
+            while self._info[parameter] not in candidates:
+                self._info[parameter] = raw_input('Enter ' + parameter +
+                                                      ' type: ')
+                if self._info[parameter] not in candidates:
+                    print 'Must be one of ' + str(candidates)
 \end{lstlisting}
 and then calling the function with the required parameters to get the value.
 \\
@@ -291,52 +294,53 @@ The basic structure of the architecture is as follows:
 \\
 The basic structure of the code will look like
 \begin{lstlisting}
-    import os 
-    plugin_dir = "plugins"
+import os
+plugin_dir = "plugins"
 
-    __all__ = []
-    for filename in os.listdir(plugin_dir):
-        filename = plugin_dir + "/" + filename
-        if os.path.isfile(filename):
-            basename = os.path.basename(filename)
-            base, extension = os.path.splitext(basename)
-            if extension == ".py" and not basename.startswith("_"):
-                __all__.append(base)
+__all__ = []
+for filename in os.listdir(plugin_dir):
+    filename = plugin_dir + "/" + filename
+    if os.path.isfile(filename):
+        basename = os.path.basename(filename)
+        base, extension = os.path.splitext(basename)
+        if extension == ".py" and not basename.startswith("_"):
+            __all__.append(base)
 \end{lstlisting}
 
 \item \textbf{PluginManager}: The module will load the required plugin from the plugins list and call it with the specified commands(if any).
 \\
 Code for loading and calling a plugin will look like: 
 \begin{lstlisting}
-    def load_plugin(self, plugin_name):
-        """ Loads a single plugin given its name """
-        if not plugin_name in __all__:
-            raise KeyError("Plugin " + plugin_name + " not found")
-        try:
-            plugin = self.__plugins[plugin_name]
-        except KeyError:
-            # Load the plugin only if not loaded yet
-            module = __import__("plugins." + plugin_name, fromlist=["plugins"])
-            plugin = module.load()
-            self.__plugins[plugin_name] = plugin
-        return plugin
+def load_plugin(self, plugin_name):
+    """ Loads a single plugin given its name """
+    if plugin_name not in __all__:
+        raise KeyError("Plugin " + plugin_name + " not found")
+    try:
+        plugin = self.__plugins[plugin_name]
+    except KeyError:
+        # Load the plugin only if not loaded yet
+        module = __import__("plugins." + plugin_name, fromlist=["plugins"])
+        plugin = module.load()
+        self.__plugins[plugin_name] = plugin
+    return plugin
 
-    def call(self, plugin_name, command_name, args):
-        """ Calls the given command on the given plugin """
-        try:
-            plugin = self.load_plugin(plugin_name)
-            if not command_name:
+
+def call(self, plugin_name, command_name, args):
+    """ Calls the given command on the given plugin """
+    try:
+        plugin = self.load_plugin(plugin_name)
+        if not command_name:
+            self.help(plugin)
+        else:
+            try:
+                command = plugin._commands()[command_name]
+                return command(args)
+            except KeyError:
+                # Command not found in plugin. Print only plugin help
                 self.help(plugin)
-            else:
-                try:
-                    command = plugin._commands()[command_name]
-                    return command(args)
-                except KeyError:
-                    # Command not found in plugin. Print only plugin help
-                    self.help(plugin)
-        except KeyError:
-            # Plugin not found, pring generic help
-            self.help_all()
+    except KeyError:
+        # Plugin not found, pring generic help
+        self.help_all()
 \end{lstlisting}
 After this, it will call the specified command of the given plugin with the user-specified arguments (if any).
 
