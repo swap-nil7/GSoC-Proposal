@@ -207,8 +207,8 @@ changes to
 \begin{lstlisting}
 mo = re.search(r'\.([a-z]+)\.t$', template_name)
 if not mo:
-    raise ValueError("Incorrectly formed template_name '%s'"
-                       % (template_name,))
+    raise ValueError("Incorrectly formed template_name '{}'"
+                       .format(template_name,))
 return mo.group(1)
 \end{lstlisting}
 
@@ -249,10 +249,10 @@ def getValue(parameter, candidates):
         print str(candidates)
         with SequenceCompleter(sorted(candidates)):
             while self._info[parameter] not in candidates:
-                self._info[parameter] = raw_input('Enter ' + parameter +
-                                                      ' type: ')
+                self._info[parameter] = raw_input('Enter {} type: '
+                                                      .format(parameter))
                 if self._info[parameter] not in candidates:
-                    print 'Must be one of ' + str(candidates)
+                    print 'Must be one of {}'.format(str(candidates))
 \end{lstlisting}
 and then calling the function with the required parameters to get the value.
 \\
@@ -314,12 +314,13 @@ Code for loading and calling a plugin will look like:
 def load_plugin(self, plugin_name):
     """ Loads a single plugin given its name """
     if plugin_name not in __all__:
-        raise KeyError("Plugin " + plugin_name + " not found")
+        raise KeyError("Plugin {} not found".format(plugin_name))
     try:
         plugin = self.__plugins[plugin_name]
     except KeyError:
         # Load the plugin only if not loaded yet
-        module = __import__("plugins." + plugin_name, fromlist=["plugins"])
+        module = import_module("plugins." + plugin_name,
+                                  fromlist=["plugins"])
         plugin = module.load()
         self.__plugins[plugin_name] = plugin
     return plugin
@@ -422,7 +423,7 @@ The code can be reviewed as per the proposed timeline whereas it can be merged a
 \end{itemize}
 
 \subsection{Automated Testing}
-Although the code will be thoroughly tested locally by comparing the generated scripts with the newmod file or the present modtool generated scripts, I will run PyLint against the generated scripts and work on building a minimal Python QA that creates a module, adds a Python source and Python QA file to it, runs the QA test with randomly generated numbers in the Python source and then deletes the entire directory.
+Although the code will be thoroughly tested locally by comparing the generated scripts with the gr-newmod files or the present modtool generated scripts, I will run Pylint against the generated scripts and work on building a minimal Python QA that creates a module, adds a Python source and Python QA file to it, runs the QA test with randomly generated numbers in the Python source and then deletes the entire directory.
 
 \section{Acknowledgement}
 I have thoroughly gone through the GSoC StudentInfo page and GSoC Manifest page. I hereby assure that I will abide by the rules and regulations. I also accept the three strikes rule and the details mentioned.
@@ -433,9 +434,9 @@ I also assure that I will communicate with the assigned mentor regularly, mainta
 The entire code during the coding period will be transparent, i.e., available on Github. The code submitted will be GPLv3 licensed.
 
 \section{Personal Details and Experience}
-I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming, and applied probability. I am proficient in Python, C++, JAVA, Javascript, and PHP. I am familiar with git environment as I work regularly on Gitlab. I haven‚Äôt contributed much to open source but since we all know ‚Äú\textbf{Cyberspectrum is the best spectrum}‚Äù, I‚Äôll really like to contribute to GNU Radio and make it as my first remarkable experience. I am proficient in two human languages including English.
+I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming, and applied probability. I am proficient in Python, C++, JAVA, Javascript, and PHP. I am familiar with git environment as I work regularly on Gitlab (due to the group's policy and copyright issues, the code is not open source and hence the profile link cannot be published). I havenít contributed much to open source but since we all know ì\textbf{Cyberspectrum is the best spectrum}î, Iíll really like to contribute to GNU Radio and make it as my first remarkable experience. I am proficient in two human languages including English.
 \\
-I have the experience of working closely with a team as I am an active member of \href{http://img.channeli.in/}{\textbf{Information Management Group}} at IIT Roorkee, a bunch of passionate enthusiasts who manage the \href{https://www.iitr.ac.in/}{\textbf{institute main website}}, internet and intranet activities of the university and the placement portal. My major project as a part of the group is ‚ÄòForminator‚Äô, an intranet-based forms application in which the user can create forms, select the audience groups or individuals, create groups for future use and use the information database of the institute. The project has some remarkable features like conditional fields implemented using tree algorithm.
+I have the experience of working closely with a team as I am an active member of \href{http://img.channeli.in/}{\textbf{Information Management Group}} at IIT Roorkee, a bunch of passionate enthusiasts who manage the \href{https://www.iitr.ac.in/}{\textbf{institute main website}}, internet and intranet activities of the university and the placement portal. My major project as a part of the group is ëForminatorí, an intranet-based forms application in which the user can create forms, select the audience groups or individuals, create groups for future use and use the information database of the institute. The project has some remarkable features like conditional fields implemented using tree algorithm.
 \\ \\
 I am also a member of \textbf{Programming and Algorithms Group} which is aimed at spreading the culture of algorithms and competitive programming among people both in and outside IIT Roorkee by organizing contests, delivering lectures, etc.
 \\ \\
@@ -461,6 +462,6 @@ Here is the \href{https://swap-nil7.github.io/resume.pdf}{link} to my CV.
 \end{tabular}
 
 \section{Conclusion}
-gr-modtool is currently very powerful tool as it highly facilitates the user‚Äôs experience by eliminating the necessity to type the boilerplate code, editing makefiles, etc. But the inclusion of the above-mentioned features will make the code more customizable, extensible and will also ease the process of further program development.
+gr-modtool is currently very powerful tool as it highly facilitates the userís experience by eliminating the necessity to type the boilerplate code, editing makefiles, etc. But the inclusion of the above-mentioned features will make the code more customizable, extensible and will also ease the process of further program development.
 
 \end{document}
