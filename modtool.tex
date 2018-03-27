@@ -162,7 +162,7 @@ In the proposal, the focus is mainly on the pockets of Py3k idiosyncrasies, the 
 
 \section{Proposed Workflow}
 \label{sec:theory}
-Initially, I will work on making the entire modtool python 3 compatible. Then, I will work to initialize the plugin API. After that, I will start with the main task of making the code more functional and rewriting the modtool as a plugin API with present functionalities like add, remove, disable, etc. as plugins.
+Initially, I will work on making the entire modtool python 3 compatible. Then, I will work to initialize the plugin API. After that, I will start with the main task of making the code more functional and rewriting the modtool as a plugin API with present functionalities like add, remove, disable, etc.
 
 \subsection{Python version-independent compatibility}
 Although gr-modtool automates the boring, monotonous work involved in writing the boilerplate code, makefile editing, etc. for C++ or Python 2 developers, it is the need of the hour to make it Python 3 compatible. 
@@ -271,7 +271,7 @@ Currently, modtool is not available as a plugin. The basic advantages of re-writ
 Moreover, modtool is only usable as a command line program and is not available as an API. The basic advantages of building a Python API for the modtool are:-
 \begin{itemize}
 \item Sharing and distribution of the content becomes easier
-\item Redundancy will be reduced as the code written by the user is reusable
+\item Redundancy reduces as the code written by the user is reusable
 \item Usability of the tool increases as it is also scriptable from other Python scripts
 \end{itemize}
 After the Plugin API is implemented, the modtool can be extended to include VOLK and RFNoC.
@@ -282,7 +282,6 @@ There will be three main classes of the architecture:-
 \item \textbf{PluginManager}: Loads plugins and calls the appropriate plugin method when the user invokes the command line.
 \item \textbf{AbstractPlugin}: Defines common behavior for all plugins. Each plugin class must extend this one to be considered a valid plugin.
 \end{itemize}
-
 The command line tool will have the following syntax: \textbf{cli $<$plugin$>$$<$command$>$ $<$arguments$>$} wherein arguments are not mandatory. 
 \\
 For example:\textit{cli gr\_modtool add -t general} or \textit{cli rfnocmodtool help} are some examples of valid commands.
@@ -403,7 +402,7 @@ The deliverables of the GSoC project are as follows:
 \begin{itemize}
 \item Properly implemented version independent compatibility of python 2 and python 3 with thorough testing.
 \item Properly restructured code in favor of functional behavior. 
-\item Properly implemented plugin architecture which can be easily extended to include rfnocmodtool and volk modtool.
+\item Properly implemented plugin architecture with python API which can be easily extended to include rfnocmodtool and volk modtool.
 \item Slight work for the improvement of Command Line Interface.
 \end{itemize}
 
@@ -411,7 +410,7 @@ The deliverables of the GSoC project are as follows:
 \begin{itemize}
 \item Phase-1: Py3k compatibility, the complete basic structure of Plugin architecture.
 \item Phase-2: Restructure modtool\_newmod.py, modtool\_base.py, modtool\_add.py, modtool\_rm.py.
-\item Final Evaluation: Complete rewriting modtool as plugin architecture, restructuring the modtool to make it more functional and make it entirely python version independent.
+\item Final Evaluation: Complete rewriting modtool as plugin architecture along with python API, restructuring the modtool to make it more functional and making the modtool entirely python version-independent.
 \end{itemize}
 
 \subsection{Review/Merge Cycle}
@@ -434,7 +433,7 @@ I also assure that I will communicate with the assigned mentor regularly, mainta
 The entire code during the coding period will be transparent, i.e., available on Github. The code submitted will be GPLv3 licensed.
 
 \section{Personal Details and Experience}
-I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming, and applied probability. I am proficient in Python, C++, JAVA, Javascript, and PHP. I am familiar with git environment as I work regularly on Gitlab (hosted on our own server; due to the group's policy and copyright issues, the code cannot be published). I haven’t contributed much to open source but since we all know “\textbf{Cyberspectrum is the best spectrum}”, I’ll really like to contribute to GNU Radio and make it as my first remarkable experience. I am proficient in two human languages including English.
+I am a second year undergraduate at Indian Institute of Technology Roorkee. My areas of interest are software development, competitive programming, and applied probability. I am proficient in Python, C++, JAVA, Javascript, and PHP. I am familiar with git environment as I work regularly on Gitlab (hosted on our own server; due to the group's policy and copyright issues, the code cannot be published). I haven’t contributed much to open source but since we all know “\textbf{Cyberspectrum is the best spectrum}”, I’ll really like to contribute to GNU Radio and make it as my first remarkable experience. I will not get any extra credits for the GSoC project. I am proficient in two human languages including English.
 \\
 I have the experience of working closely with a team as I am an active member of \href{http://img.channeli.in/}{\textbf{Information Management Group}} at IIT Roorkee, a bunch of passionate enthusiasts who manage the \href{https://www.iitr.ac.in/}{\textbf{institute main website}}, internet and intranet activities of the university and the placement portal. My major project as a part of the group is ‘Forminator’, an intranet-based forms application in which the user can create forms, select the audience groups or individuals, create groups for future use and use the information database of the institute. The project has some remarkable features like conditional fields implemented using tree algorithm.
 \\ \\
